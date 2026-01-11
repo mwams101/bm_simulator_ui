@@ -1,6 +1,9 @@
+// components/AddUserModal.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         user_name: '',
         email: '',
@@ -35,6 +38,13 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                 },
                 body: JSON.stringify(formData)
             });
+
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('token');
+                navigate('/login', { replace: true });
+                return;
+            }
 
             if (!response.ok) {
                 const data = await response.json();

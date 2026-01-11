@@ -1,5 +1,5 @@
-// pages/UsersPage.jsx
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
+import {useNavigate} from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import SearchAndFilter from './components/SearchAndFilter';
@@ -8,6 +8,7 @@ import SecurityNotice from './components/SecurityNotice';
 import AddUserModal from './components/AddUserModal';
 
 const UsersPage = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -33,6 +34,13 @@ const UsersPage = () => {
                     'Content-Type': 'application/json'
                 }
             });
+
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('token');
+                navigate('/login', {replace: true});
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to fetch users');
@@ -88,14 +96,17 @@ const UsersPage = () => {
     };
 
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
+        <div
+            className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
             <div className="layout-container flex h-full grow flex-col">
-                <Header />
+                <Header/>
 
                 <main className="flex-1 flex flex-col items-center">
-                    <div className="layout-content-container flex flex-col max-w-[1200px] w-full px-4 md:px-10 py-8 gap-6">
+                    <div
+                        className="layout-content-container flex flex-col max-w-[1200px] w-full px-4 md:px-10 py-8 gap-6">
                         {error && (
-                            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <div
+                                className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                                 <p className="text-red-600 dark:text-red-400">{error}</p>
                             </div>
                         )}
@@ -115,11 +126,11 @@ const UsersPage = () => {
                             onUserAction={handleUserAction}
                         />
 
-                        <SecurityNotice />
+                        <SecurityNotice/>
                     </div>
                 </main>
 
-                <Footer />
+                <Footer/>
             </div>
 
             <AddUserModal
