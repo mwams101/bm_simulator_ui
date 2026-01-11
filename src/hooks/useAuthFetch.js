@@ -19,6 +19,7 @@ export const useAuthFetch = () => {
             }
         };
 
+        // eslint-disable-next-line no-useless-catch
         try {
             const response = await fetch(url, config);
 

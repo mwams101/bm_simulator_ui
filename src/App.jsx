@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import DashBoardPage from "./pages/DashBoardPage.jsx";
 import UsersPage from "./pages/users/UsersPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import SchemasPage from "./pages/destinationSchemas/DestinationSchemaPage.jsx";
 
 function App() {
     const router = createBrowserRouter(
@@ -18,6 +19,11 @@ function App() {
                 <Route path='/users' element={
                     <ProtectedRoute>
                         <UsersPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/schemas' element={
+                    <ProtectedRoute>
+                        <SchemasPage/>
                     </ProtectedRoute>
                 }/>
             </Route>
