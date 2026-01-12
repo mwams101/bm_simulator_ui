@@ -1,14 +1,19 @@
+
 // pages/SchemasPage.jsx
-import {useState, useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
-import Header from '../../components/common/Header.jsx'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import PageHeader from '../../components/common/PageHeader';
 import SearchBar from '../../components/common/SearchBar';
 import DataTable from '../../components/common/DataTable';
 import Pagination from '../../components/common/Pagination';
 import InfoBanner from '../../components/common/InfoBanner';
-import AddSchemaModal from "./components/AddSchemaModal.jsx";
+import ActionMenu from '../../components/common/ActionMenu';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import AddSchemaModal from './components/AddSchemaModal';
+import ViewSchemaModal from './components/ViewSchemaModal';
+import UpdateSchemaModal from './components/UpdateSchemaModal.jsx';
 
 const SchemasPage = () => {
     const navigate = useNavigate();
@@ -18,7 +23,12 @@ const SchemasPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalSchemas, setTotalSchemas] = useState(0);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedSchema, setSelectedSchema] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -81,24 +91,76 @@ const SchemasPage = () => {
     };
 
     const handleCreateSchema = () => {
-        setIsModalOpen(true);
+        setIsAddModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
+    const handleCloseAddModal = () => {
+        setIsAddModalOpen(false);
     };
 
     const handleSchemaCreated = () => {
         fetchSchemas();
     };
 
-    const handleSchemaAction = (schema) => {
-        console.log('Action for schema:', schema);
+    const handleViewSchema = (schema) => {
+        setSelectedSchema(schema);
+        setIsViewModalOpen(true);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        navigate('/login', { replace: true });
+    const handleEditSchema = (schema) => {
+        setSelectedSchema(schema);
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleDeleteSchema = (schema) => {
+        setSelectedSchema(schema);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleSchemaUpdated = () => {
+        fetchSchemas();
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedSchema) return;
+
+        setDeleteLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:8000/destination-schemas/${selectedSchema.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('token');
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to delete schema');
+            }
+
+            // Refresh the list and close dialog
+            fetchSchemas();
+            setIsDeleteDialogOpen(false);
+            setSelectedSchema(null);
+        } catch (err) {
+            setError(err.message);
+            console.error('Error deleting schema:', err);
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleSchemaAction = (schema) => {
+        console.log('Action for schema:', schema);
     };
 
     // Table columns configuration
@@ -146,7 +208,7 @@ const SchemasPage = () => {
                 );
 
             case 'created_by':
-                { const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.created_by || 'Unknown')}&background=135bec&color=fff&size=128`;
+                const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.created_by || 'Unknown')}&background=135bec&color=fff&size=128`;
                 return (
                     <div className="flex items-center gap-2">
                         <div
@@ -157,7 +219,7 @@ const SchemasPage = () => {
               {row.created_by}
             </span>
                     </div>
-                ); }
+                );
 
             case 'created_at':
             case 'updated_at':
@@ -175,12 +237,11 @@ const SchemasPage = () => {
 
             case 'actions':
                 return (
-                    <button
-                        onClick={() => handleSchemaAction(row)}
-                        className="text-gray-400 hover:text-primary transition-colors"
-                    >
-                        <span className="material-symbols-outlined">more_vert</span>
-                    </button>
+                    <ActionMenu
+                        onView={() => handleViewSchema(row)}
+                        onEdit={() => handleEditSchema(row)}
+                        onDelete={() => handleDeleteSchema(row)}
+                    />
                 );
 
             default:
@@ -193,6 +254,11 @@ const SchemasPage = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login', { replace: true });
+    };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
@@ -259,9 +325,34 @@ const SchemasPage = () => {
             </div>
 
             <AddSchemaModal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
+                isOpen={isAddModalOpen}
+                onClose={handleCloseAddModal}
                 onSchemaCreated={handleSchemaCreated}
+            />
+
+            <ViewSchemaModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                schema={selectedSchema}
+            />
+
+            <UpdateSchemaModal
+                isOpen={isUpdateModalOpen}
+                onClose={() => setIsUpdateModalOpen(false)}
+                onSchemaUpdated={handleSchemaUpdated}
+                schema={selectedSchema}
+            />
+
+            <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Schema"
+                message={`Are you sure you want to delete "${selectedSchema?.schema_name}"? This action cannot be undone.`}
+                confirmText="Delete Schema"
+                cancelText="Cancel"
+                variant="danger"
+                loading={deleteLoading}
             />
         </div>
     );

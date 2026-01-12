@@ -1,17 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Modal from '../../../components/common/Modal.jsx'
+import Modal from '../../../components/common/Modal';
 
-const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
+const UpdateSchemaModal = ({ isOpen, onClose, onSchemaUpdated, schema }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         schema_name: '',
-        description: '',
-        schema_type: 'retail',
-        fields: []
+        description: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Initialize form with schema data when modal opens
+    useEffect(() => {
+        if (schema) {
+            setFormData({
+                schema_name: schema.schema_name || '',
+                description: schema.description || '',
+            });
+        }
+    }, [schema]);
+
+    console.log("schema", schema);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -29,8 +39,8 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8000/destination-schemas', {
-                method: 'POST',
+            const response = await fetch(`http://localhost:8000/destination-schemas/${schema.id}`, {
+                method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -47,19 +57,11 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.message || 'Failed to create schema');
+                throw new Error(data.message || 'Failed to update schema');
             }
 
-            // Reset form
-            setFormData({
-                schema_name: '',
-                description: '',
-                schema_type: 'retail',
-                fields: []
-            });
-
             // Notify parent and close
-            onSchemaCreated();
+            onSchemaUpdated();
             onClose();
         } catch (err) {
             setError(err.message);
@@ -69,32 +71,28 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
     };
 
     const handleClose = () => {
-        setFormData({
-            schema_name: '',
-            description: '',
-            schema_type: 'retail',
-            fields: []
-        });
         setError('');
         onClose();
     };
 
     const footer = (
         <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-primary text-lg mt-0.5">security</span>
+            <span className="material-symbols-outlined text-primary text-lg mt-0.5">edit</span>
             <p className="text-[11px] leading-relaxed text-[#4c669a] dark:text-gray-400 font-medium">
-                <span className="text-primary font-bold">Simulation Environment:</span> This schema is for mock data mapping only.
-                No real banking schemas are stored or accessed.
+                <span className="text-primary font-bold">Edit Mode:</span> Changes will be saved to the schema template.
+                This will not affect existing migrations using this schema.
             </p>
         </div>
     );
+
+    if (!schema) return null;
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title="Create New Schema"
-            description="Define a new destination schema template for mock banking migration simulations."
+            title="Update Schema"
+            description={`Editing: ${schema.schema_name}`}
             footer={footer}
         >
             <div className="p-8">
@@ -150,8 +148,7 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
                                 disabled={loading}
                             />
                         </div>
-                    </div>    
-
+                    </div>
                     {/* Action Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <button
@@ -170,12 +167,12 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
                             {loading ? (
                                 <>
                                     <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                                    Creating...
+                                    Updating...
                                 </>
                             ) : (
                                 <>
-                                    <span className="material-symbols-outlined text-sm">add_box</span>
-                                    Create Schema
+                                    <span className="material-symbols-outlined text-sm">save</span>
+                                    Save Changes
                                 </>
                             )}
                         </button>
@@ -186,4 +183,4 @@ const AddSchemaModal = ({ isOpen, onClose, onSchemaCreated }) => {
     );
 };
 
-export default AddSchemaModal;
+export default UpdateSchemaModal;
