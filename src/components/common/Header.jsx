@@ -5,6 +5,7 @@ const Header = ({ activeTab = 'dashboard', onLogout }) => {
         { label: 'Dashboard', path: '/dashboard', key: 'dashboard' },
         { label: 'Users', path: '/users', key: 'users' },
         { label: 'Schemas', path: '/schemas', key: 'schemas' },
+        { label: 'Schema-fields', path: '/schema-fields', key: 'schema-fields' },
     ];
 
     return (
