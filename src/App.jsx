@@ -6,6 +6,7 @@ import UsersPage from "./pages/users/UsersPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import SchemasPage from "./pages/destinationSchemas/DestinationSchemaPage.jsx";
 import SchemaFieldsPage from "./pages/schemaFields/SchemaFieldsPage.jsx";
+import MappingTemplate from "./pages/mappingTemplates/MappingTemplate.jsx";
 
 function App() {
     const router = createBrowserRouter(
@@ -30,6 +31,10 @@ function App() {
                 <Route path='/schema-fields' element={
                     <ProtectedRoute>
                         <SchemaFieldsPage/>
+                    </ProtectedRoute>
+                }/><Route path='/mapping-templates' element={
+                    <ProtectedRoute>
+                        <MappingTemplate/>
                     </ProtectedRoute>
                 }/>
             </Route>

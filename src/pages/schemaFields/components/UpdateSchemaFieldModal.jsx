@@ -5,7 +5,7 @@ import Modal from '../../../components/common/Modal';
 const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schemas = [] }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        destination_schema: '',
+        destination_schema_id: '',
         name: '',
         data_type: 'varchar',
         is_required: false,
@@ -18,11 +18,11 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Initialize form with field data when modal opens
+
     useEffect(() => {
         if (field) {
             setFormData({
-                destination_schema: field.destination_schema || '',
+                destination_schema_id: field.destination_schema_id || '',
                 name: field.name || '',
                 data_type: field.data_type || 'varchar',
                 is_required: field.is_required || false,
@@ -60,6 +60,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                 validation_rule: formData.validation_rule || null,
                 default_value: formData.default_value || null
             };
+
 
             const response = await fetch(`http://localhost:8000/schema-fields/${field.id}`, {
                 method: 'PUT',
@@ -141,15 +142,15 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                                 <select
                                     className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
                                     id="destination_schema"
-                                    name="destination_schema"
-                                    value={formData.destination_schema}
+                                    name="destination_schema_id"
+                                    value={formData.destination_schema_id}
                                     onChange={handleInputChange}
                                     required
                                     disabled={loading}
                                 >
                                     <option value="">Select Schema</option>
                                     {schemas.map((schema) => (
-                                        <option key={schema.id} value={schema.schema_name}>
+                                        <option key={schema.id} value={schema.id}>
                                             {schema.schema_name}
                                         </option>
                                     ))}

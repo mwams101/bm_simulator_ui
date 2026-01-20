@@ -6,6 +6,7 @@ const Header = ({ activeTab = 'dashboard', onLogout }) => {
         { label: 'Users', path: '/users', key: 'users' },
         { label: 'Schemas', path: '/schemas', key: 'schemas' },
         { label: 'Schema-fields', path: '/schema-fields', key: 'schema-fields' },
+        { label: 'Mapping-templates', path: '/mapping-templates', key: 'mapping-templates' },
     ];
 
     return (

@@ -18,6 +18,7 @@ import UpdateSchemaFieldModal from "./components/UpdateSchemaFieldModal.jsx";
 const SchemasFieldsPage = () => {
     const navigate = useNavigate();
     const [schemaFields, setSchemaFields] = useState([]);
+    const [schemas, setSchemas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,8 +33,37 @@ const SchemasFieldsPage = () => {
     const itemsPerPage = 10;
 
     useEffect(() => {
+        fetchSchemas();
         fetchSchemaFields();
     }, [searchTerm]);
+
+
+    const fetchSchemas = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:8000/destination-schemas', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('token');
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch schemas');
+            }
+
+            const data = await response.json();
+            setSchemas(data);
+        } catch (err) {
+            console.error('Error fetching schemas:', err);
+        }
+    };
 
     const fetchSchemaFields = async () => {
         setLoading(true);
@@ -48,7 +78,6 @@ const SchemasFieldsPage = () => {
                 }
             });
 
-            // Check for authentication errors
             if (response.status === 401 || response.status === 403) {
                 localStorage.removeItem('token');
                 navigate('/login', { replace: true });
@@ -61,19 +90,15 @@ const SchemasFieldsPage = () => {
 
             const data = await response.json();
 
-            // Filter schemas based on search term
+            // FIXED: Filter logic
             let filteredSchemaFields = data;
             if (searchTerm) {
-                filteredSchemaFields = data.filter(schemaFields =>
-                    schemaFields.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.data_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.is_required?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.is_unique?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.validation_rule?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.max_length?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.dafault_value?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.created_by?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    schemaFields.updated_at?.toLowerCase().includes(searchTerm.toLowerCase())
+                filteredSchemaFields = data.filter(field =>
+                        field.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        field.destination_schema?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        field.data_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        field.validation_rule?.toLowerCase().includes(searchTerm.toLowerCase())
+                    // Removed boolean and number fields from string search
                 );
             }
 
@@ -104,7 +129,8 @@ const SchemasFieldsPage = () => {
         setIsAddModalOpen(false);
     };
 
-    const handleSchemaFieldCreated = () => {
+    // FIXED: Changed from handleSchemaFieldCreated to match modal prop
+    const handleFieldCreated = () => {
         fetchSchemaFields();
     };
 
@@ -123,7 +149,7 @@ const SchemasFieldsPage = () => {
         setIsDeleteDialogOpen(true);
     };
 
-    const handleSchemaUpdatedField = () => {
+    const handleFieldUpdated = () => {
         fetchSchemaFields();
     };
 
@@ -141,7 +167,6 @@ const SchemasFieldsPage = () => {
                 }
             });
 
-            // Check for authentication errors
             if (response.status === 401 || response.status === 403) {
                 localStorage.removeItem('token');
                 navigate('/login', { replace: true });
@@ -153,7 +178,6 @@ const SchemasFieldsPage = () => {
                 throw new Error(data.message || 'Failed to delete schema field');
             }
 
-            // Refresh the list and close dialog
             fetchSchemaFields();
             setIsDeleteDialogOpen(false);
             setSelectedSchemaField(null);
@@ -171,27 +195,23 @@ const SchemasFieldsPage = () => {
 
     // Table columns configuration
     const columns = [
-        { header: 'ID', key: 'id' },
-        { header: 'Destination Schema', key: 'destination_schema' },
-        { header: 'Name', key: 'name' },
+        { header: 'Field Name', key: 'name' },
+        { header: 'Schema', key: 'destination_schema' },
         { header: 'Data Type', key: 'data_type' },
-        { header: 'Is Required', key: 'is_required' },
-        { header: 'Is Unique', key: 'is_unique' },
-        { header: 'Validation Rule', key: 'validation_rule' },
+        { header: 'Required', key: 'is_required' },
+        { header: 'Unique', key: 'is_unique' },
+        { header: 'Validation', key: 'validation_rule' },
         { header: 'Max Length', key: 'max_length' },
-        { header: 'Default Value', key: 'default_value' },
-        { header: 'Field Order', key: 'field_order' },
-        { header: 'Created At', key: 'created_at' },
-        { header: 'Updated At', key: 'updated_at' },
+        { header: 'Default', key: 'default_value' },
+        { header: 'Order', key: 'field_order' },
         { header: 'Actions', key: 'actions', align: 'right' }
     ];
 
-    // Filter configuration
     const filters = [
         {
-            label: 'Schema Type',
+            label: 'Data Type',
             icon: 'category',
-            onClick: () => console.log('Filter by type')
+            onClick: () => console.log('Filter by data type')
         },
         {
             label: 'Sort By',
@@ -200,7 +220,7 @@ const SchemasFieldsPage = () => {
         }
     ];
 
-    // Custom cell renderer
+    // Custom cell renderer (your existing code is good)
     const renderCell = (row, key, column) => {
         switch (key) {
             case 'name':
@@ -208,8 +228,8 @@ const SchemasFieldsPage = () => {
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-lg">data_object</span>
                         <span className="text-[#0d121b] dark:text-white text-sm font-bold">
-                        {row.name}
-                    </span>
+                            {row.name}
+                        </span>
                     </div>
                 );
 
@@ -218,8 +238,8 @@ const SchemasFieldsPage = () => {
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-sm">database</span>
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {row.destination_schema || 'N/A'}
-                    </span>
+                            {row.destination_schema_id || 'N/A'}
+                        </span>
                     </div>
                 );
 
@@ -245,8 +265,8 @@ const SchemasFieldsPage = () => {
 
                 return (
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase ${colorClass}`}>
-                    {row.data_type || 'N/A'}
-                </span>
+                        {row.data_type || 'N/A'}
+                    </span>
                 ); }
 
             case 'is_required':
@@ -271,12 +291,12 @@ const SchemasFieldsPage = () => {
                     <div className="flex items-center justify-center">
                         {row.is_unique ? (
                             <span className="material-symbols-outlined text-primary text-lg" title="Unique">
-                            check_circle
-                        </span>
+                                check_circle
+                            </span>
                         ) : (
                             <span className="material-symbols-outlined text-gray-300 dark:text-gray-700 text-lg" title="Not unique">
-                            cancel
-                        </span>
+                                cancel
+                            </span>
                         )}
                     </div>
                 );
@@ -297,12 +317,12 @@ const SchemasFieldsPage = () => {
             case 'max_length':
                 return (
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {row.max_length ? (
-                        <span className="font-mono">{row.max_length}</span>
-                    ) : (
-                        <span className="text-gray-400 dark:text-gray-500">∞</span>
-                    )}
-                </span>
+                        {row.max_length ? (
+                            <span className="font-mono">{row.max_length}</span>
+                        ) : (
+                            <span className="text-gray-400 dark:text-gray-500">∞</span>
+                        )}
+                    </span>
                 );
 
             case 'default_value':
@@ -323,8 +343,8 @@ const SchemasFieldsPage = () => {
                     <div className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-gray-400 text-sm">sort</span>
                         <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
-                        {row.field_order || 0}
-                    </span>
+                            {row.field_order || 0}
+                        </span>
                     </div>
                 );
 
@@ -332,14 +352,14 @@ const SchemasFieldsPage = () => {
             case 'updated_at':
                 return (
                     <span className="text-gray-500 dark:text-gray-400 text-sm">
-                    {row[key] ? new Date(row[key]).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }) : 'N/A'}
-                </span>
+                        {row[key] ? new Date(row[key]).toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : 'N/A'}
+                    </span>
                 );
 
             case 'actions':
@@ -381,17 +401,17 @@ const SchemasFieldsPage = () => {
                         )}
 
                         <PageHeader
-                            title="Destination Schema Templates"
-                            description="Define and manage data structures for mock banking migration simulations."
-                            buttonText="Create New Schema"
-                            buttonIcon="add_box"
+                            title="Schema Fields"
+                            description="Define and manage field definitions for your destination schemas."
+                            buttonText="Add New Field"
+                            buttonIcon="add"
                             onButtonClick={handleCreateSchemaField}
                         />
 
                         <SearchBar
                             searchTerm={searchTerm}
                             onSearchChange={handleSearchChange}
-                            placeholder="Search templates by name or description..."
+                            placeholder="Search fields by name, schema, or data type..."
                             filters={filters}
                         />
 
@@ -401,7 +421,7 @@ const SchemasFieldsPage = () => {
                                 data={paginatedSchemas}
                                 loading={loading}
                                 onRowAction={handleSchemaAction}
-                                emptyMessage="No schemas found"
+                                emptyMessage="No schema fields found"
                                 renderCell={renderCell}
                             />
 
@@ -418,12 +438,7 @@ const SchemasFieldsPage = () => {
                         <InfoBanner
                             icon="security"
                             title="Security Note & Compliance"
-                            description={
-                                <>
-                                    These schemas are for <span className="font-bold text-primary dark:text-blue-400">mock data mapping only</span>.
-                                    No real banking schemas are stored or accessed. All structures are designed for simulation and educational purposes only.
-                                </>
-                            }
+                            description="These field definitions are for mock data mapping only. No real banking data structures are modified."
                         />
                     </div>
                 </main>
@@ -431,32 +446,35 @@ const SchemasFieldsPage = () => {
                 <Footer />
             </div>
 
+
             <AddSchemaFieldModal
                 isOpen={isAddModalOpen}
                 onClose={handleCloseAddModal}
-                onSchemaCreated={handleSchemaFieldCreated}
+                onFieldCreated={handleFieldCreated}
+                schemas={schemas}
             />
 
             <ViewSchemaFieldModal
                 isOpen={isViewModalOpen}
                 onClose={() => setIsViewModalOpen(false)}
-                schema={selectedSchemaField}
+                field={selectedSchemaField}
             />
 
             <UpdateSchemaFieldModal
                 isOpen={isUpdateModalOpen}
                 onClose={() => setIsUpdateModalOpen(false)}
-                onSchemaUpdated={handleSchemaUpdatedField}
-                schema={selectedSchemaField}
+                onFieldUpdated={handleFieldUpdated}
+                field={selectedSchemaField}
+                schemas={schemas}
             />
 
             <ConfirmDialog
                 isOpen={isDeleteDialogOpen}
                 onClose={() => setIsDeleteDialogOpen(false)}
                 onConfirm={confirmDelete}
-                title="Delete Schema"
-                message={`Are you sure you want to delete "${selectedSchemaField?.name}"? This action cannot be undone.`}
-                confirmText="Delete Schema"
+                title="Delete Schema Field"
+                message={`Are you sure you want to delete the field "${selectedSchemaField?.name}"? This action cannot be undone.`}
+                confirmText="Delete Field"
                 cancelText="Cancel"
                 variant="danger"
                 loading={deleteLoading}
@@ -464,5 +482,6 @@ const SchemasFieldsPage = () => {
         </div>
     );
 };
+
 
 export default SchemasFieldsPage;

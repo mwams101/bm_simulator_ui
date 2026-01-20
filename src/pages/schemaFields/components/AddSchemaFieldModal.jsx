@@ -6,7 +6,7 @@ const AddSchemaFieldModal = ({ isOpen, onClose, onFieldCreated = [] }) => {
     const navigate = useNavigate();
     const [destinationSchemas, setDestinationSchemas] = useState([]);
     const [formData, setFormData] = useState({
-        destination_schema: '',
+        destination_schema_id: '',
         name: '',
         data_type: 'varchar',
         is_required: false,
@@ -68,7 +68,7 @@ const AddSchemaFieldModal = ({ isOpen, onClose, onFieldCreated = [] }) => {
 
             // Reset form
             setFormData({
-                destination_schema: '',
+                destination_schema_id: '',
                 name: '',
                 data_type: 'varchar',
                 is_required: false,
@@ -91,7 +91,7 @@ const AddSchemaFieldModal = ({ isOpen, onClose, onFieldCreated = [] }) => {
 
     const handleClose = () => {
         setFormData({
-            destination_schema: '',
+            destination_schema_id: '',
             name: '',
             data_type: 'varchar',
             is_required: false,
@@ -138,7 +138,7 @@ const AddSchemaFieldModal = ({ isOpen, onClose, onFieldCreated = [] }) => {
             isOpen={isOpen}
             onClose={handleClose}
             title="Add New Schema Field"
-            description="Define a new field for your destination schema template."
+            description="Define a new field for your destination schema template."onFieldCreated
             footer={footer}
             size="lg"
         >
