@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
-import Header from './components/Header';
+import Header from '../../components/common/Header';
 import Footer from './components/Footer';
 import SearchAndFilter from './components/SearchAndFilter';
 import UsersTable from './components/UsersTable';
@@ -90,6 +90,11 @@ const UsersPage = () => {
         fetchUsers();
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login', { replace: true });
+    };
+
     const handleUserAction = (user) => {
         // Handle user actions (edit, delete, etc.)
         console.log('Action for user:', user);
@@ -99,7 +104,7 @@ const UsersPage = () => {
         <div
             className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
             <div className="layout-container flex h-full grow flex-col">
-                <Header/>
+                <Header activeTab="users" onLogout={handleLogout} />
 
                 <main className="flex-1 flex flex-col items-center">
                     <div

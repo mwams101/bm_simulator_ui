@@ -390,7 +390,7 @@ const SchemasFieldsPage = () => {
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
             <div className="layout-container flex h-full grow flex-col">
-                <Header activeTab="schemas" onLogout={handleLogout} />
+                <Header activeTab="schema-fields" onLogout={handleLogout} />
 
                 <main className="flex-1 flex flex-col items-center">
                     <div className="layout-content-container flex flex-col max-w-[1200px] w-full px-4 md:px-10 py-8 gap-6">
