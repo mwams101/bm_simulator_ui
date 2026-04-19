@@ -113,7 +113,7 @@ const UpdateMappingTemplateModal = ({isOpen, onClose, onTemplateUpdated, templat
                                 description
                             </span>
                             <input
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                 id="template_name"
                                 name="template_name"
                                 placeholder="e.g. Standard Customer Migration"
@@ -136,7 +136,7 @@ const UpdateMappingTemplateModal = ({isOpen, onClose, onTemplateUpdated, templat
                                 subject
                             </span>
                             <textarea
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none"
                                 id="description"
                                 name="description"
                                 placeholder="Describe the purpose and scope of this mapping template..."

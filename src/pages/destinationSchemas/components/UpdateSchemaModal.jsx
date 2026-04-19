@@ -114,7 +114,7 @@ const UpdateSchemaModal = ({ isOpen, onClose, onSchemaUpdated, schema }) => {
                 database
               </span>
                             <input
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                 id="schema_name"
                                 name="schema_name"
                                 placeholder="e.g. Standard_Retail_v2"
@@ -137,7 +137,7 @@ const UpdateSchemaModal = ({ isOpen, onClose, onSchemaUpdated, schema }) => {
                 description
               </span>
                             <textarea
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none"
                                 id="description"
                                 name="description"
                                 placeholder="Core retail banking entities including accounts and balances..."

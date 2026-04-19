@@ -140,7 +140,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                   database
                 </span>
                                 <select
-                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
+                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
                                     id="destination_schema"
                                     name="destination_schema_id"
                                     value={formData.destination_schema_id}
@@ -171,7 +171,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                   data_object
                 </span>
                                 <input
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                     id="name"
                                     name="name"
                                     placeholder="e.g. account_number"
@@ -197,7 +197,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                   category
                 </span>
                                 <select
-                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
+                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
                                     id="data_type"
                                     name="data_type"
                                     value={formData.data_type}
@@ -232,7 +232,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                   straighten
                 </span>
                                 <input
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                     id="max_length"
                                     name="max_length"
                                     placeholder="255"
@@ -255,7 +255,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                   sort
                 </span>
                                 <input
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                     id="field_order"
                                     name="field_order"
                                     placeholder="1"
@@ -279,7 +279,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                 rule
               </span>
                             <textarea
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none font-mono"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none resize-none font-mono"
                                 id="validation_rule"
                                 name="validation_rule"
                                 placeholder="e.g. regex:/^[A-Z0-9]+$/ or min:10,max:100"
@@ -301,7 +301,7 @@ const UpdateSchemaFieldModal = ({ isOpen, onClose, onFieldUpdated, field, schema
                 settings
               </span>
                             <input
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none font-mono"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none font-mono"
                                 id="default_value"
                                 name="default_value"
                                 placeholder="e.g. NULL or 0 or 'active'"

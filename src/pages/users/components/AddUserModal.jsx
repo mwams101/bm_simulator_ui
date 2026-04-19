@@ -119,7 +119,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                 person
               </span>
                             <input
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                 id="user_name"
                                 name="user_name"
                                 placeholder="e.g. amorgan_sim"
@@ -141,7 +141,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                 mail
               </span>
                             <input
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                 id="email"
                                 name="email"
                                 placeholder="alex.morgan@mockbank.sim"
@@ -164,7 +164,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                   lock
                 </span>
                                 <input
-                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
                                     id="password"
                                     name="password"
                                     type={showPassword ? "text" : "password"}
@@ -195,7 +195,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                   badge
                 </span>
                                 <select
-                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
+                                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none appearance-none"
                                     id="role"
                                     name="role"
                                     value={formData.role}

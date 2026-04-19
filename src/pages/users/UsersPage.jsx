@@ -6,6 +6,8 @@ import SearchAndFilter from './components/SearchAndFilter';
 import UsersTable from './components/UsersTable';
 import SecurityNotice from './components/SecurityNotice';
 import AddUserModal from './components/AddUserModal';
+import UpdateUserModal from './components/UpdateUserModal';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const UsersPage = () => {
     const navigate = useNavigate();
@@ -16,6 +18,10 @@ const UsersPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -95,9 +101,48 @@ const UsersPage = () => {
         navigate('/login', { replace: true });
     };
 
-    const handleUserAction = (user) => {
-        // Handle user actions (edit, delete, etc.)
-        console.log('Action for user:', user);
+    const handleEditUser = (user) => {
+        setSelectedUser(user);
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleDeleteUser = (user) => {
+        setSelectedUser(user);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedUser) return;
+        setDeleteLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:8000/users/${selectedUser.user_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('token');
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to delete user');
+            }
+
+            fetchUsers();
+            setIsDeleteDialogOpen(false);
+            setSelectedUser(null);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     return (
@@ -128,7 +173,8 @@ const UsersPage = () => {
                             currentPage={currentPage}
                             totalUsers={totalUsers}
                             onPageChange={handlePageChange}
-                            onUserAction={handleUserAction}
+                            onEditUser={handleEditUser}
+                            onDeleteUser={handleDeleteUser}
                         />
 
                         <SecurityNotice/>
@@ -142,6 +188,25 @@ const UsersPage = () => {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onUserAdded={handleUserAdded}
+            />
+
+            <UpdateUserModal
+                isOpen={isUpdateModalOpen}
+                onClose={() => setIsUpdateModalOpen(false)}
+                onUserUpdated={fetchUsers}
+                user={selectedUser}
+            />
+
+            <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete User"
+                message={`Are you sure you want to delete "${selectedUser?.user_name}"? This action cannot be undone.`}
+                confirmText="Delete User"
+                cancelText="Cancel"
+                variant="danger"
+                loading={deleteLoading}
             />
         </div>
     );

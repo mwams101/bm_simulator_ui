@@ -1,4 +1,6 @@
-const UserTableRow = ({ user, onAction }) => {
+import ActionMenu from '../../../components/common/ActionMenu';
+
+const UserTableRow = ({ user, onEdit, onDelete }) => {
     const getRoleBadgeClass = (role) => {
         switch (role.toLowerCase()) {
             case 'admin':
@@ -52,12 +54,10 @@ const UserTableRow = ({ user, onAction }) => {
                 {user.last_login || 'Never'}
             </td>
             <td className="px-6 py-4 text-right">
-                <button
-                    onClick={() => onAction(user)}
-                    className="text-gray-400 hover:text-primary transition-colors"
-                >
-                    <span className="material-symbols-outlined">more_vert</span>
-                </button>
+                <ActionMenu
+                    onEdit={() => onEdit(user)}
+                    onDelete={() => onDelete(user)}
+                />
             </td>
         </tr>
     );

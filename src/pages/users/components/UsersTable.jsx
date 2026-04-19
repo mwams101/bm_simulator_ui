@@ -1,6 +1,6 @@
 import UserTableRow from './UserTableRow';
 
-const UsersTable = ({ users, loading, currentPage, totalUsers, onPageChange, onUserAction }) => {
+const UsersTable = ({ users, loading, currentPage, totalUsers, onPageChange, onEditUser, onDeleteUser }) => {
     if (loading) {
         return (
             <div className="overflow-hidden rounded-xl border border-[#cfd7e7] dark:border-gray-800 bg-white dark:bg-background-dark shadow-sm">
@@ -42,7 +42,7 @@ const UsersTable = ({ users, loading, currentPage, totalUsers, onPageChange, onU
                     <tbody className="divide-y divide-[#cfd7e7] dark:divide-gray-800">
                     {users.length > 0 ? (
                         users.map((user) => (
-                            <UserTableRow key={user.id} user={user} onAction={onUserAction} />
+                            <UserTableRow key={user.user_id} user={user} onEdit={onEditUser} onDelete={onDeleteUser} />
                         ))
                     ) : (
                         <tr>
