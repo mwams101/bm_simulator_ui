@@ -7,13 +7,19 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import SchemasPage from "./pages/destinationSchemas/DestinationSchemaPage.jsx";
 import SchemaFieldsPage from "./pages/schemaFields/SchemaFieldsPage.jsx";
 import MappingTemplate from "./pages/mappingTemplates/MappingTemplate.jsx";
+import MigrationJobsPage from "./pages/migrationJobs/MigrationJobsPage.jsx";
+import MigrationJobDetailPage from "./pages/migrationJobs/MigrationJobDetailPage.jsx";
+import CustomersPage from "./pages/customers/CustomersPage.jsx";
+import AccountsPage from "./pages/accounts/AccountsPage.jsx";
+import NotificationsPage from "./pages/notifications/NotificationsPage.jsx";
+import AuditLogsPage from "./pages/auditLogs/AuditLogsPage.jsx";
 
 function App() {
     const router = createBrowserRouter(
         createRoutesFromElements(
             <Route>
                 <Route path='/login' element={<LoginPage/>}/>
-                <Route path='/dashboard' element={
+                <Route path='/' element={
                     <ProtectedRoute>
                         <DashBoardPage/>
                     </ProtectedRoute>
@@ -32,9 +38,40 @@ function App() {
                     <ProtectedRoute>
                         <SchemaFieldsPage/>
                     </ProtectedRoute>
-                }/><Route path='/mapping-templates' element={
+                }/>
+                <Route path='/mapping-templates' element={
                     <ProtectedRoute>
                         <MappingTemplate/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/migration-jobs' element={
+                    <ProtectedRoute>
+                        <MigrationJobsPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/migration-jobs/:id' element={
+                    <ProtectedRoute>
+                        <MigrationJobDetailPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/customers' element={
+                    <ProtectedRoute>
+                        <CustomersPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/accounts' element={
+                    <ProtectedRoute>
+                        <AccountsPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/notifications' element={
+                    <ProtectedRoute>
+                        <NotificationsPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path='/audit-logs' element={
+                    <ProtectedRoute>
+                        <AuditLogsPage/>
                     </ProtectedRoute>
                 }/>
             </Route>

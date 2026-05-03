@@ -2,11 +2,16 @@ import { Link } from 'react-router-dom';
 
 const Header = ({ activeTab = 'dashboard', onLogout }) => {
     const navItems = [
-        { label: 'Dashboard', path: '/dashboard', key: 'dashboard' },
+        { label: 'Dashboard', path: '/', key: 'dashboard' },
         { label: 'Users', path: '/users', key: 'users' },
         { label: 'Schemas', path: '/schemas', key: 'schemas' },
         { label: 'Schema-fields', path: '/schema-fields', key: 'schema-fields' },
         { label: 'Mapping-templates', path: '/mapping-templates', key: 'mapping-templates' },
+        { label: 'Migration Jobs', path: '/migration-jobs', key: 'migration-jobs' },
+        { label: 'Customers', path: '/customers', key: 'customers' },
+        { label: 'Accounts', path: '/accounts', key: 'accounts' },
+        { label: 'Notifications', path: '/notifications', key: 'notifications' },
+        { label: 'Audit Logs', path: '/audit-logs', key: 'audit-logs' },
     ];
 
     return (
