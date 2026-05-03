@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../../../../components/common/ConfirmDialog';
 
@@ -23,106 +23,141 @@ const EmptyRow = ({ cols, message }) => (
 );
 
 // ── Uploaded Files ──────────────────────────────────────────────────────────
+const ACCEPTED = '.csv,.xlsx,.xls';
+
 const UploadedFilesSection = ({ jobId }) => {
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showForm, setShowForm] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const [dragOver, setDragOver] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
-    const [form, setForm] = useState({ original_filename: '', uploaded_filename: '', file_path: '', file_type: 'CSV', file_size: 0 });
-    const [submitting, setSubmitting] = useState(false);
-    const [formError, setFormError] = useState('');
 
-    const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+    const authHeader = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}` });
 
-    const fetch_ = async () => {
+    const fetchFiles = async () => {
         setLoading(true);
         try {
-            const r = await fetch(`${API}/uploaded-files`, { headers: headers() });
+            const r = await fetch(`${API}/uploaded-files`, { headers: authHeader() });
             if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
             const data = await r.json();
-            setFiles(data.filter(f => f.migration_job_id === jobId));
+            setFiles(data.filter(f => f.migration_job_id === jobId && !f.is_deleted));
         } finally { setLoading(false); }
     };
 
-    useEffect(() => { fetch_(); }, [jobId]);
+    useEffect(() => { fetchFiles(); }, [jobId]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); setSubmitting(true); setFormError('');
+    const uploadFile = async (file) => {
+        setUploading(true); setUploadError('');
         try {
-            const r = await fetch(`${API}/uploaded-files`, {
-                method: 'POST', headers: headers(),
-                body: JSON.stringify({ ...form, migration_job_id: jobId, file_size: Number(form.file_size) }),
+            const formData = new FormData();
+            formData.append('file', file);
+            const r = await fetch(`${API}/uploaded-files/upload/${jobId}`, {
+                method: 'POST',
+                headers: authHeader(),
+                body: formData,
             });
-            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed'); }
-            setShowForm(false);
-            setForm({ original_filename: '', uploaded_filename: '', file_path: '', file_type: 'CSV', file_size: 0 });
-            fetch_();
-        } catch (err) { setFormError(err.message); }
-        finally { setSubmitting(false); }
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Upload failed'); }
+            fetchFiles();
+        } catch (err) { setUploadError(err.message); }
+        finally { setUploading(false); }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) uploadFile(file);
+        e.target.value = '';
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault(); setDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) uploadFile(file);
     };
 
     const handleDelete = async () => {
         setDeleteLoading(true);
         try {
-            await fetch(`${API}/uploaded-files/${deleteTarget.id}`, { method: 'DELETE', headers: headers() });
-            setDeleteTarget(null); fetch_();
+            await fetch(`${API}/uploaded-files/${deleteTarget.id}`, { method: 'DELETE', headers: authHeader() });
+            setDeleteTarget(null); fetchFiles();
         } finally { setDeleteLoading(false); }
     };
 
     return (
         <div className="bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 p-5">
-            <SectionHeader title="Source Files" icon="upload_file" onAdd={() => setShowForm(true)} addLabel="Register File" />
+            <SectionHeader title="Source Files" icon="upload_file" />
 
-            {showForm && (
-                <form onSubmit={handleSubmit} className="mb-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-[#e7ebf3] dark:border-gray-700 space-y-3">
-                    {formError && <p className="text-xs text-red-500">{formError}</p>}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div><label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Original Filename</label>
-                            <input className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary" required value={form.original_filename} onChange={e => setForm(p => ({ ...p, original_filename: e.target.value }))} /></div>
-                        <div><label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Stored Filename</label>
-                            <input className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary" required value={form.uploaded_filename} onChange={e => setForm(p => ({ ...p, uploaded_filename: e.target.value }))} /></div>
-                        <div><label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">File Path</label>
-                            <input className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary" required value={form.file_path} onChange={e => setForm(p => ({ ...p, file_path: e.target.value }))} /></div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div><label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Type</label>
-                                <select className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary" value={form.file_type} onChange={e => setForm(p => ({ ...p, file_type: e.target.value }))}>
-                                    <option value="CSV">CSV</option><option value="EXCEL">Excel</option>
-                                </select></div>
-                            <div><label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Size (bytes)</label>
-                                <input type="number" min="0" className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary" value={form.file_size} onChange={e => setForm(p => ({ ...p, file_size: e.target.value }))} /></div>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                        <button type="button" onClick={() => { setShowForm(false); setFormError(''); }} className="px-4 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-                        <button type="submit" disabled={submitting} className="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-1">
-                            {submitting && <span className="material-symbols-outlined animate-spin text-xs">progress_activity</span>}Save
-                        </button>
-                    </div>
-                </form>
+            {/* Drop zone */}
+            <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                className={`mb-4 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 cursor-pointer transition-colors
+                    ${dragOver
+                        ? 'border-primary bg-primary/5'
+                        : 'border-[#cfd7e7] dark:border-gray-700 hover:border-primary hover:bg-gray-50 dark:hover:bg-gray-900/50'}`}
+            >
+                {uploading ? (
+                    <>
+                        <span className="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+                        <p className="text-sm font-medium text-[#4c669a] dark:text-gray-400">Uploading...</p>
+                    </>
+                ) : (
+                    <>
+                        <span className="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                        <p className="text-sm font-bold text-[#0d121b] dark:text-white">Drop a file here or click to browse</p>
+                        <p className="text-xs text-[#4c669a] dark:text-gray-400">Accepted formats: CSV, XLSX, XLS</p>
+                    </>
+                )}
+            </div>
+
+            <input ref={fileInputRef} type="file" accept={ACCEPTED} className="hidden" onChange={handleFileChange} />
+
+            {uploadError && (
+                <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
+                    <span className="material-symbols-outlined text-red-500 text-sm">error</span>
+                    <p className="text-xs text-red-600 dark:text-red-400">{uploadError}</p>
+                </div>
             )}
 
             <table className="w-full text-left text-xs">
                 <thead><tr className="border-b border-[#cfd7e7] dark:border-gray-700">
-                    {['Filename', 'Type', 'Size', 'Uploaded', ''].map(h => <th key={h} className="px-3 py-2 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">{h}</th>)}
+                    {['Filename', 'Type', 'Size', 'Uploaded', 'Expires', ''].map(h => (
+                        <th key={h} className="px-3 py-2 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">{h}</th>
+                    ))}
                 </tr></thead>
                 <tbody className="divide-y divide-[#cfd7e7] dark:divide-gray-800">
-                    {loading ? <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400"><span className="material-symbols-outlined animate-spin">progress_activity</span></td></tr>
+                    {loading
+                        ? <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-400"><span className="material-symbols-outlined animate-spin">progress_activity</span></td></tr>
                         : files.length > 0 ? files.map(f => (
                             <tr key={f.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                                <td className="px-3 py-2.5"><div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-primary text-sm">description</span><span className="font-medium text-[#0d121b] dark:text-white">{f.original_filename}</span></div></td>
+                                <td className="px-3 py-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-primary text-sm">description</span>
+                                        <span className="font-medium text-[#0d121b] dark:text-white">{f.original_filename}</span>
+                                    </div>
+                                </td>
                                 <td className="px-3 py-2.5"><span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">{f.file_type}</span></td>
                                 <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400">{(f.file_size / 1024).toFixed(1)} KB</td>
                                 <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400">{new Date(f.upload_timestamp).toLocaleDateString()}</td>
-                                <td className="px-3 py-2.5 text-right"><button onClick={() => setDeleteTarget(f)} className="text-gray-400 hover:text-red-500 transition-colors"><span className="material-symbols-outlined text-sm">delete</span></button></td>
+                                <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400">{new Date(f.expiry_timestamp).toLocaleDateString()}</td>
+                                <td className="px-3 py-2.5 text-right">
+                                    <button onClick={() => setDeleteTarget(f)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                        <span className="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </td>
                             </tr>
-                        )) : <EmptyRow cols={5} message="No files registered yet." />}
+                        )) : <EmptyRow cols={6} message="No files uploaded yet. Drop a CSV or Excel file above." />}
                 </tbody>
             </table>
 
             <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete}
-                title="Remove File" message={`Remove "${deleteTarget?.original_filename}" from this job?`}
+                title="Remove File" message={`Remove "${deleteTarget?.original_filename}" from this job? The file will be permanently deleted.`}
                 confirmText="Remove" cancelText="Cancel" variant="danger" loading={deleteLoading} />
         </div>
     );
