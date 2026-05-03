@@ -12,7 +12,7 @@ const statusClasses = {
 
 const ITEMS_PER_PAGE = 10;
 
-const RecordsTab = ({ job }) => {
+const RecordsTab = ({ job, onStartExecution, startExecutionLoading, executionResult }) => {
     const navigate = useNavigate();
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,6 +38,7 @@ const RecordsTab = ({ job }) => {
     const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
 
     return (
+        <div className="space-y-4">
         <div className="bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 overflow-hidden">
             <div className="px-5 py-4 border-b border-[#cfd7e7] dark:border-gray-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -123,6 +124,56 @@ const RecordsTab = ({ job }) => {
                     )}
                 </>
             )}
+        </div>
+
+        {/* Execution result banner */}
+        {executionResult && (
+            <div className="bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className={`material-symbols-outlined ${executionResult.status === 'completed' ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {executionResult.status === 'completed' ? 'check_circle' : 'error'}
+                    </span>
+                    <h3 className="text-sm font-bold text-[#0d121b] dark:text-white">
+                        Execution {executionResult.status === 'completed' ? 'Completed' : 'Failed'}
+                    </h3>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 text-center border border-emerald-100 dark:border-emerald-900/40">
+                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{executionResult.committed}</p>
+                        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mt-1">Committed</p>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center border border-amber-100 dark:border-amber-900/30">
+                        <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{executionResult.skipped_duplicates}</p>
+                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mt-1">Skipped (duplicates)</p>
+                    </div>
+                    <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 text-center border border-red-100 dark:border-red-900/30">
+                        <p className="text-2xl font-black text-red-500 dark:text-red-400">{executionResult.failed}</p>
+                        <p className="text-xs font-semibold text-red-700 dark:text-red-300 mt-1">Failed</p>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Start Execution button — only shown in PREVIEWING status */}
+        {job.status === 'PREVIEWING' && (
+            <div className="flex items-center justify-between bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 p-5">
+                <div>
+                    <p className="text-sm font-bold text-[#0d121b] dark:text-white">Ready to Execute</p>
+                    <p className="text-xs text-[#4c669a] dark:text-gray-400 mt-0.5">
+                        Review the transformed records above, then commit them to the destination tables.
+                    </p>
+                </div>
+                <button
+                    onClick={onStartExecution}
+                    disabled={startExecutionLoading}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/25 hover:bg-emerald-500/90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                    {startExecutionLoading
+                        ? <><span className="material-symbols-outlined animate-spin">progress_activity</span>Executing...</>
+                        : <><span className="material-symbols-outlined">rocket_launch</span>Execute Migration</>}
+                </button>
+            </div>
+        )}
         </div>
     );
 };

@@ -1,0 +1,11 @@
+first_name,last_name,date_of_birth,email,phone_masked,address_line_1,address_line_2,city,state,postal_code,country,customer_type,customer_status,account_number,account_type,balance,currency,account_open_date,account_status
+James,Okafor,1985-03-12,james.okafor@mockbank.sim,***-***-4421,14 Harbour View Road,,Lagos,Lagos,100001,Nigeria,individual,active,100000001,savings,45230.50,NGN,2018-06-01,active
+Amara,Mensah,1990-07-25,amara.mensah@mockbank.sim,***-***-7713,22 Liberation Avenue,Apt 3B,Accra,Greater Accra,00233,Ghana,individual,active,100000002,checking,12870.00,GHS,2020-02-14,active
+Kwame,Asante,1978-11-03,kwame.asante@mockbank.sim,***-***-5502,5 Independence Square,,Kumasi,Ashanti,00234,Ghana,individual,active,100000003,savings,98450.75,GHS,2015-09-30,active
+Fatima,Al-Rashid,1995-01-18,fatima.alrashid@mockbank.sim,***-***-9910,88 King Fahd Road,,Riyadh,Riyadh,11564,Saudi Arabia,individual,active,100000004,credit,3200.00,SAR,2022-03-07,active
+David,Nkrumah,1982-06-30,david.nkrumah@mockbank.sim,***-***-3340,7 Accra Road,Suite 12,Tema,Greater Accra,00235,Ghana,business,active,100000005,checking,250000.00,GHS,2017-11-20,active
+Ngozi,Adeyemi,1993-04-09,ngozi.adeyemi@mockbank.sim,***-***-6621,31 Victoria Island,,Lagos,Lagos,101233,Nigeria,individual,active,100000006,savings,18900.25,NGN,2019-08-15,active
+Chidi,Eze,1988-12-22,chidi.eze@mockbank.sim,***-***-1187,102 Aba Road,,Port Harcourt,Rivers,500001,Nigeria,individual,active,100000007,loan,0.00,NGN,2021-04-01,active
+Aisha,Kamara,1975-09-14,aisha.kamara@mockbank.sim,***-***-8823,19 Freetown Street,,Freetown,Western,00232,Sierra Leone,individual,active,100000008,savings,7640.00,SLL,2016-07-11,active
+Emmanuel,Boateng,1999-02-28,emmanuel.boateng@mockbank.sim,***-***-4456,44 High Street,,Takoradi,Western,00236,Ghana,individual,active,100000009,checking,4320.80,GHS,2023-01-05,active
+Zara,Diallo,1987-05-17,zara.diallo@mockbank.sim,***-***-7790,8 Boulevard du Mali,,Conakry,Conakry,00224,Guinea,individual,active,100000010,savings,31500.00,GNF,2014-03-22,active

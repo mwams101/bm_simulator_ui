@@ -28,6 +28,8 @@ const MigrationJobDetailPage = () => {
     const [activeTab, setActiveTab] = useState('setup');
     const [startMappingLoading, setStartMappingLoading] = useState(false);
     const [startValidationLoading, setStartValidationLoading] = useState(false);
+    const [startExecutionLoading, setStartExecutionLoading] = useState(false);
+    const [executionResult, setExecutionResult] = useState(null);
 
     const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
@@ -61,6 +63,24 @@ const MigrationJobDetailPage = () => {
             setError(err.message);
         } finally {
             setStartMappingLoading(false);
+        }
+    };
+
+    const handleStartExecution = async () => {
+        setStartExecutionLoading(true);
+        setError('');
+        setExecutionResult(null);
+        try {
+            const r = await fetch(`${API}/migration-jobs/${id}/start-execution`, { method: 'POST', headers: headers() });
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed to start execution'); }
+            const result = await r.json();
+            setExecutionResult(result);
+            await fetchJob();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setStartExecutionLoading(false);
         }
     };
 
@@ -205,7 +225,7 @@ const MigrationJobDetailPage = () => {
                                 {/* Tab content */}
                                 <div>
                                     {activeTab === 'setup' && <SetupTab job={job} onStartMapping={handleStartMapping} startMappingLoading={startMappingLoading} />}
-                                    {activeTab === 'records' && <RecordsTab job={job} />}
+                                    {activeTab === 'records' && <RecordsTab job={job} onStartExecution={handleStartExecution} startExecutionLoading={startExecutionLoading} executionResult={executionResult} />}
                                     {activeTab === 'validation' && <ValidationTab job={job} onStartValidation={handleStartValidation} startValidationLoading={startValidationLoading} />}
                                     {activeTab === 'reports' && <ReportsTab job={job} />}
                                 </div>
