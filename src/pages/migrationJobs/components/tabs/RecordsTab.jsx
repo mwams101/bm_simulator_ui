@@ -155,7 +155,7 @@ const RecordsTab = ({ job, onStartExecution, startExecutionLoading, executionRes
         )}
 
         {/* Start Execution button — only shown in PREVIEWING status */}
-        {job.status === 'PREVIEWING' && (
+        {job.status === 'previewing' && (
             <div className="flex items-center justify-between bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 p-5">
                 <div>
                     <p className="text-sm font-bold text-[#0d121b] dark:text-white">Ready to Execute</p>

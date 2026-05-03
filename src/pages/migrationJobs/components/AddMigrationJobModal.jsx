@@ -37,7 +37,7 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
                 body: JSON.stringify({
                     name,
                     destination_schema_id: destinationSchemaId ? Number(destinationSchemaId) : null,
-                    status: 'PENDING',
+                    status: 'pending',
                     total_records: 0,
                     successful_records: 0,
                     failed_records: 0,

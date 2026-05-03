@@ -379,7 +379,7 @@ const SetupTab = ({ job, onStartMapping, startMappingLoading }) => (
         <UploadedFilesSection jobId={job.id} />
         <FieldMappingsSection jobId={job.id} />
 
-        {job.status === 'PENDING' && (
+        {job.status === 'pending' && (
             <div className="flex justify-end">
                 <button
                     onClick={onStartMapping}

@@ -144,7 +144,7 @@ const ValidationTab = ({ job, onStartValidation, startValidationLoading }) => {
                 )}
             </div>
 
-            {job.status === 'VALIDATING' && (
+            {job.status === 'validating' && (
                 <div className="flex justify-end">
                     <button
                         onClick={onStartValidation}
