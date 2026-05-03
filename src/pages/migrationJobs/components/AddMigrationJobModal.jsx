@@ -1,11 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const inp = "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none";
 
 const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
     const navigate = useNavigate();
     const [name, setName] = useState('');
+    const [destinationSchemaId, setDestinationSchemaId] = useState('');
+    const [schemas, setSchemas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const fetchSchemas = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const r = await fetch('http://localhost:8000/destination-schemas', {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (r.ok) setSchemas(await r.json());
+            } catch {}
+        };
+        fetchSchemas();
+    }, [isOpen]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,6 +36,7 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name,
+                    destination_schema_id: destinationSchemaId ? Number(destinationSchemaId) : null,
                     status: 'PENDING',
                     total_records: 0,
                     successful_records: 0,
@@ -34,6 +53,7 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
                 throw new Error(data.detail || 'Failed to create migration job');
             }
             setName('');
+            setDestinationSchemaId('');
             onJobCreated();
             onClose();
         } catch (err) {
@@ -43,7 +63,7 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
         }
     };
 
-    const handleClose = () => { setName(''); setError(''); onClose(); };
+    const handleClose = () => { setName(''); setDestinationSchemaId(''); setError(''); onClose(); };
 
     if (!isOpen) return null;
 
@@ -68,14 +88,14 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="p-8 space-y-5">
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-[#0d121b] dark:text-gray-200" htmlFor="job_name">Job Name</label>
                         <div className="relative">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">work</span>
                             <input
                                 id="job_name"
-                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none"
+                                className={inp}
                                 placeholder="e.g. Retail_Bank_Migration_Q2"
                                 value={name}
                                 onChange={e => { setName(e.target.value); if (error) setError(''); }}
@@ -84,6 +104,28 @@ const AddMigrationJobModal = ({ isOpen, onClose, onJobCreated }) => {
                             />
                         </div>
                     </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#0d121b] dark:text-gray-200" htmlFor="schema_id">
+                            Destination Schema <span className="text-gray-400 font-normal">(optional)</span>
+                        </label>
+                        <div className="relative">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">database</span>
+                            <select
+                                id="schema_id"
+                                className={inp}
+                                value={destinationSchemaId}
+                                onChange={e => setDestinationSchemaId(e.target.value)}
+                                disabled={loading}
+                            >
+                                <option value="">No schema selected</option>
+                                {schemas.map(s => (
+                                    <option key={s.id} value={s.id}>{s.schema_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-end gap-3 pt-2">
                         <button type="button" onClick={handleClose} disabled={loading}
                             className="px-6 py-2.5 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">

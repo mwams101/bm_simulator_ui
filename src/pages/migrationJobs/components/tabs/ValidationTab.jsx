@@ -15,7 +15,7 @@ const resolutionClasses = {
     MANUAL_REVIEW: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
 };
 
-const ValidationTab = ({ job }) => {
+const ValidationTab = ({ job, onStartValidation, startValidationLoading }) => {
     const navigate = useNavigate();
     const [validations, setValidations] = useState([]);
     const [duplicates, setDuplicates] = useState([]);
@@ -143,6 +143,20 @@ const ValidationTab = ({ job }) => {
                     </table>
                 )}
             </div>
+
+            {job.status === 'VALIDATING' && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={onStartValidation}
+                        disabled={startValidationLoading}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-white font-bold shadow-lg shadow-amber-500/25 hover:bg-amber-500/90 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {startValidationLoading
+                            ? <><span className="material-symbols-outlined animate-spin">progress_activity</span>Running Validation...</>
+                            : <><span className="material-symbols-outlined">rule</span>Start Validation</>}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

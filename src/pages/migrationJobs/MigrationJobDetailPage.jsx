@@ -27,6 +27,7 @@ const MigrationJobDetailPage = () => {
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('setup');
     const [startMappingLoading, setStartMappingLoading] = useState(false);
+    const [startValidationLoading, setStartValidationLoading] = useState(false);
 
     const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
@@ -60,6 +61,21 @@ const MigrationJobDetailPage = () => {
             setError(err.message);
         } finally {
             setStartMappingLoading(false);
+        }
+    };
+
+    const handleStartValidation = async () => {
+        setStartValidationLoading(true);
+        setError('');
+        try {
+            const r = await fetch(`${API}/migration-jobs/${id}/start-validation`, { method: 'POST', headers: headers() });
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed to start validation'); }
+            await fetchJob();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setStartValidationLoading(false);
         }
     };
 
@@ -100,7 +116,10 @@ const MigrationJobDetailPage = () => {
                                             </div>
                                             <div>
                                                 <h1 className="text-xl font-black text-[#0d121b] dark:text-white tracking-tight">{job.name}</h1>
-                                                <p className="text-xs text-[#4c669a] dark:text-gray-400 mt-0.5">Job #{job.id} · Created {new Date(job.created_at).toLocaleDateString()}</p>
+                                                <p className="text-xs text-[#4c669a] dark:text-gray-400 mt-0.5">
+                                                Job #{job.id} · Created {new Date(job.created_at).toLocaleDateString()}
+                                                {job.destination_schema_id && <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">Schema #{job.destination_schema_id}</span>}
+                                            </p>
                                             </div>
                                         </div>
                                         <JobStatusBadge status={job.status} />
@@ -187,7 +206,7 @@ const MigrationJobDetailPage = () => {
                                 <div>
                                     {activeTab === 'setup' && <SetupTab job={job} onStartMapping={handleStartMapping} startMappingLoading={startMappingLoading} />}
                                     {activeTab === 'records' && <RecordsTab job={job} />}
-                                    {activeTab === 'validation' && <ValidationTab job={job} />}
+                                    {activeTab === 'validation' && <ValidationTab job={job} onStartValidation={handleStartValidation} startValidationLoading={startValidationLoading} />}
                                     {activeTab === 'reports' && <ReportsTab job={job} />}
                                 </div>
                             </>
