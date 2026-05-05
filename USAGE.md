@@ -1,6 +1,6 @@
 # BankSim Data Migration Platform — Usage Guide
 
-A mock banking data migration simulator. This guide covers everything implemented to date: admin configuration, the full migration pipeline, and supporting management pages.
+A mock banking data migration simulator. This guide covers everything implemented to date: admin configuration, the full migration pipeline (including reporting), and supporting management pages.
 
 ---
 
@@ -20,6 +20,7 @@ A mock banking data migration simulator. This guide covers everything implemente
    - [Step 4 — Start Mapping](#step-4--start-mapping)
    - [Step 5 — Start Validation](#step-5--start-validation)
    - [Step 6 — Review & Execute](#step-6--review--execute)
+   - [Step 7 — Generate Reports](#step-7--generate-reports)
 6. [Post-Migration Pages](#post-migration-pages)
    - [Migrated Customers](#migrated-customers)
    - [Migrated Accounts](#migrated-accounts)
@@ -34,10 +35,10 @@ A mock banking data migration simulator. This guide covers everything implemente
 
 ## System Overview
 
-The platform simulates a bank-to-bank data migration. It takes source data (CSV / Excel), transforms it according to configurable field mapping rules, validates it against a destination schema, and writes the result to new customer and account records.
+The platform simulates a bank-to-bank data migration. It takes source data (CSV / Excel), transforms it according to configurable field mapping rules, validates it against a destination schema, writes the result to new customer and account records, and finally generates a structured report of the outcome.
 
 ```
-Upload File → Map Fields → Validate → Preview → Execute → Customers & Accounts
+Upload File → Map Fields → Validate → Preview → Execute → Report
    PENDING  →  MAPPING  → VALIDATING → PREVIEWING → EXECUTING → COMPLETED
 ```
 
@@ -181,13 +182,30 @@ Still in the **Setup** tab:
 2. Select a **Mapping Template**
 3. Set **Mapping Rules** JSON (global options):
    ```json
-   { "skip_empty_rows": true, "encoding": "utf-8", "customer_fields": ["first_name","last_name","date_of_birth","email","phone_masked","address_line_1","address_line_2","city","state","postal_code","country","customer_type","customer_status"], "account_fields": ["account_number","account_type","balance","currency","account_open_date","account_status"] }
+   {
+     "skip_empty_rows": true,
+     "encoding": "utf-8",
+     "customer_fields": ["first_name","last_name","date_of_birth","email","phone_masked","address_line_1","address_line_2","city","state","postal_code","country","customer_type","customer_status"],
+     "account_fields": ["account_number","account_type","balance","currency","account_open_date","account_status"]
+   }
    ```
 4. Save — the mapping appears in the table; click its row to select it
 
-**Add Field Mapping Details** (one per column in your source file):
+**Add Field Mapping Details:**
 
-After selecting a field mapping, the **Field Mapping Details** sub-section appears below. Add one detail per source column:
+After selecting a field mapping, the **Field Mapping Details** sub-section appears. You have two ways to add details:
+
+**Option A — Quick Map (recommended for identity mappings):**
+1. Click **Quick Map** in the Field Mapping Details header
+2. Paste a comma-separated list of all column names from your source file:
+   ```
+   first_name, last_name, date_of_birth, email, phone_masked, address_line_1, address_line_2, city, state, postal_code, country, customer_type, customer_status, account_number, account_type, balance, currency, account_open_date, account_status
+   ```
+3. Click **Apply** — one identity detail (`source = destination`, rule = `none`) is created for each column in one batch
+
+**Option B — Manual (one at a time):**
+
+Add one detail per source column using the form. Use this when you need a non-identity mapping (different destination name or transformation rule):
 
 | Source Field | Destination Field | Order | Transformation |
 |---|---|---|---|
@@ -255,6 +273,29 @@ After selecting a field mapping, the **Field Mapping Details** sub-section appea
 
 ---
 
+### Step 7 — Generate Reports
+
+1. Go to the **Reports** tab (available on any job, but generation requires COMPLETED or FAILED status)
+2. Select a report type from the dropdown:
+
+| Type | Content |
+|------|---------|
+| **Summary** | Job info, record counts, validation totals, duplicate group count |
+| **Detailed** | Everything in Summary, plus up to 100 failed record entries with error messages |
+| **Validation** | Same as Detailed — focused on validation and failure detail |
+
+3. Click **Generate** — the backend writes a JSON file to `reports/<job_id>/` on the server and registers a `MigrationReport` row; a Notification and Audit Log entry are also created automatically
+4. The new report appears in the **Generated Reports** list below
+5. Click **View** on any report to expand an inline structured viewer showing:
+   - Job metadata (name, status, start/end times)
+   - Record count stats (total, successful, failed)
+   - Validation breakdown (errors, warnings, counts by type)
+   - Duplicate group count
+   - Failed records list (Detailed/Validation types only)
+6. Click **View** again to collapse. Click the delete icon to remove the report row (the file on disk is retained)
+
+---
+
 ## Post-Migration Pages
 
 ### Migrated Customers
@@ -281,7 +322,7 @@ All `NewBankAccount` records. Supports:
 
 **Route:** `/notifications`
 
-System notifications generated around migration events. Supports:
+System notifications generated around migration events (including automatic report-ready alerts). Supports:
 - **Mark as Sent** — click the ✓ icon on any PENDING notification to set status to SENT with a timestamp
 - **Delete** — removes the notification
 - Pending count is shown as a badge in the page header
@@ -312,10 +353,11 @@ The file `sample_data/migration_sample.csv` contains 10 mock bank customers with
 2. Create a Mapping Template (e.g. `Retail_Template`)
 3. Create a Migration Job — select your schema
 4. Upload `migration_sample.csv`
-5. Add a Field Mapping using your template with the `customer_fields` / `account_fields` mapping_rules JSON shown above
-6. Add 19 Field Mapping Details (identity mappings as per the table in Step 3)
-7. Start Mapping → Start Validation → Execute Migration
+5. Add a Field Mapping using your template with the `customer_fields` / `account_fields` mapping_rules JSON shown in Step 3
+6. Use **Quick Map** to create all 19 identity field mapping details in one step
+7. Click **Start Mapping** → **Start Validation** → **Execute Migration**
 8. Check `/customers` and `/accounts` — 10 customers and 10 accounts should appear
+9. Go to the **Reports** tab and generate a Summary report to capture the outcome
 
 ---
 
@@ -323,13 +365,13 @@ The file `sample_data/migration_sample.csv` contains 10 mock bank customers with
 
 | Status | Meaning | Next Action |
 |--------|---------|-------------|
-| `PENDING` | Job created, awaiting setup | Upload file, configure mappings, click **Start Mapping** |
-| `MAPPING` | Mapping service is running | Wait — auto-advances |
-| `VALIDATING` | Records created, awaiting validation | Click **Start Validation** in the Validation tab |
-| `PREVIEWING` | Validation complete, ready to commit | Review records, click **Execute Migration** in the Records tab |
-| `EXECUTING` | Execution service is running | Wait — auto-advances |
-| `COMPLETED` | All records committed | View results in Customers and Accounts pages |
-| `FAILED` | Service error | Check the error message shown in the job header card |
+| `pending` | Job created, awaiting setup | Upload file, configure mappings, click **Start Mapping** |
+| `mapping` | Mapping service is running | Wait — auto-advances |
+| `validating` | Records created, awaiting validation | Click **Start Validation** in the Validation tab |
+| `previewing` | Validation complete, ready to commit | Review records, click **Execute Migration** in the Records tab |
+| `executing` | Execution service is running | Wait — auto-advances |
+| `completed` | All records committed | Generate a report in the Reports tab |
+| `failed` | Service error | Check the error message shown in the job header card; a report can still be generated |
 
 ---
 
