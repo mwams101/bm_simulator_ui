@@ -280,6 +280,10 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
     const [details, setDetails] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [showQuickMap, setShowQuickMap] = useState(false);
+    const [quickMapHeaders, setQuickMapHeaders] = useState('');
+    const [quickMapLoading, setQuickMapLoading] = useState(false);
+    const [quickMapError, setQuickMapError] = useState('');
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [form, setForm] = useState({ source_field: '', destination_field: '', field_order: 1, transformation_rule: 'none' });
@@ -322,9 +326,76 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
         } finally { setDeleteLoading(false); }
     };
 
+    const handleQuickMap = async () => {
+        const cols = quickMapHeaders.split(',').map(c => c.trim()).filter(Boolean);
+        if (cols.length === 0) { setQuickMapError('Paste at least one column name.'); return; }
+        setQuickMapLoading(true); setQuickMapError('');
+        const startOrder = details.length + 1;
+        const results = await Promise.allSettled(
+            cols.map((col, i) =>
+                fetch(`${API}/field-mapping-details`, {
+                    method: 'POST', headers: headers(),
+                    body: JSON.stringify({
+                        field_mapping_id: mappingId,
+                        source_field: col,
+                        destination_field: col,
+                        field_order: startOrder + i,
+                        transformation_rule: 'none',
+                    }),
+                })
+            )
+        );
+        const failed = results.filter(r => r.status === 'rejected' || !r.value?.ok).length;
+        setQuickMapLoading(false);
+        if (failed > 0) setQuickMapError(`${failed} field(s) failed to create. They may already exist.`);
+        else { setShowQuickMap(false); setQuickMapHeaders(''); }
+        fetch_();
+    };
+
     return (
         <div className="mt-4 ml-4 border-l-2 border-primary/20 pl-4">
-            <SectionHeader title="Field Mapping Details" icon="swap_horiz" onAdd={() => { setShowForm(true); setForm(p => ({ ...p, field_order: details.length + 1 })); }} addLabel="Add Field" />
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">swap_horiz</span>
+                    <h3 className="text-sm font-bold text-[#0d121b] dark:text-white">Field Mapping Details</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => { setShowQuickMap(p => !p); setShowForm(false); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary text-primary text-xs font-bold hover:bg-primary/5 transition-colors">
+                        <span className="material-symbols-outlined text-sm">auto_fix_high</span>Quick Map
+                    </button>
+                    <button onClick={() => { setShowForm(true); setShowQuickMap(false); setForm(p => ({ ...p, field_order: details.length + 1 })); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors">
+                        <span className="material-symbols-outlined text-sm">add</span>Add Field
+                    </button>
+                </div>
+            </div>
+
+            {showQuickMap && (
+                <div className="mb-3 p-4 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20 space-y-3">
+                    <div>
+                        <p className="text-xs font-bold text-[#0d121b] dark:text-white mb-1">Paste CSV column headers</p>
+                        <p className="text-xs text-[#4c669a] dark:text-gray-400 mb-2">
+                            Creates identity mappings (source = destination, no transformation) for every column you list. Use this when your CSV is already in the right format.
+                        </p>
+                        <textarea
+                            className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-xs font-mono outline-none focus:border-primary resize-none"
+                            rows={2}
+                            placeholder="first_name,last_name,date_of_birth,email,phone_masked,address_line_1,..."
+                            value={quickMapHeaders}
+                            onChange={e => { setQuickMapHeaders(e.target.value); setQuickMapError(''); }}
+                        />
+                        {quickMapError && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{quickMapError}</p>}
+                        <p className="text-xs text-[#4c669a] dark:text-gray-400 mt-1">
+                            {quickMapHeaders.split(',').filter(c => c.trim()).length} column(s) detected
+                        </p>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => { setShowQuickMap(false); setQuickMapHeaders(''); setQuickMapError(''); }} className="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                        <button type="button" onClick={handleQuickMap} disabled={quickMapLoading} className="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-1">
+                            {quickMapLoading ? <><span className="material-symbols-outlined animate-spin text-xs">progress_activity</span>Creating...</> : <><span className="material-symbols-outlined text-xs">auto_fix_high</span>Create All Mappings</>}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showForm && (
                 <form onSubmit={handleSubmit} className="mb-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-[#e7ebf3] dark:border-gray-700 space-y-3">
