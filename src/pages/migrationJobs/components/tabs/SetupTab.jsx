@@ -517,10 +517,11 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
 };
 
 // ── Job Settings ────────────────────────────────────────────────────────────
-const JobSettingsSection = ({ job, onJobUpdated }) => {
+const JobSettingsSection = ({ job, onJobUpdated, onJobDirectUpdate }) => {
     const navigate = useNavigate();
     const [editing, setEditing] = useState(false);
     const [schemas, setSchemas] = useState([]);
+    const [schemasError, setSchemasError] = useState('');
     const [form, setForm] = useState({ name: job.name, destination_schema_id: job.destination_schema_id ?? '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -530,10 +531,21 @@ const JobSettingsSection = ({ job, onJobUpdated }) => {
     useEffect(() => {
         const fetchSchemas = async () => {
             try {
-                const r = await fetch(`${API}/destination-schemas`, { headers: headers() });
+                const r = await fetch(`${API}/destination-schemas/`, { headers: headers() });
                 if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
-                if (r.ok) setSchemas(await r.json());
-            } catch (e) { void e; }
+                if (r.ok) {
+                    const data = await r.json();
+                    console.log('Schemas loaded:', data);
+                    setSchemas(Array.isArray(data) ? data : []);
+                } else {
+                    const text = await r.text();
+                    console.error('Schemas fetch failed:', r.status, text);
+                    setSchemasError(`Failed to load schemas (${r.status})`);
+                }
+            } catch (e) {
+                console.error('Schemas fetch error:', e);
+                setSchemasError('Could not load schemas');
+            }
         };
         fetchSchemas();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -547,18 +559,23 @@ const JobSettingsSection = ({ job, onJobUpdated }) => {
     const handleSave = async () => {
         setSaving(true); setError('');
         try {
+            const payload = {
+                ...job,
+                name: form.name,
+                destination_schema_id: form.destination_schema_id !== '' ? Number(form.destination_schema_id) : null,
+            };
+            console.log('PUT payload:', payload);
             const r = await fetch(`${API}/migration-jobs/${job.id}`, {
                 method: 'PUT', headers: headers(),
-                body: JSON.stringify({
-                    name: form.name,
-                    destination_schema_id: form.destination_schema_id !== '' ? Number(form.destination_schema_id) : null,
-                }),
+                body: JSON.stringify(payload),
             });
             if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
-            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed to save'); }
+            const responseData = await r.json();
+            console.log('PUT response:', responseData);
+            if (!r.ok) { throw new Error(responseData.detail || JSON.stringify(responseData) || 'Failed to save'); }
             setEditing(false);
-            onJobUpdated?.();
-        } catch (err) { setError(err.message); }
+            onJobDirectUpdate?.(responseData);
+        } catch (err) { console.error('Save job error:', err); setError(err.message); }
         finally { setSaving(false); }
     };
 
@@ -583,14 +600,18 @@ const JobSettingsSection = ({ job, onJobUpdated }) => {
                         </div>
                         <div>
                             <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Destination Schema</label>
-                            <select
-                                className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary"
-                                value={form.destination_schema_id}
-                                onChange={e => setForm(p => ({ ...p, destination_schema_id: e.target.value }))}
-                            >
-                                <option value="">No schema selected</option>
-                                {schemas.map(s => <option key={s.id} value={s.id}>{s.schema_name}</option>)}
-                            </select>
+                            {schemasError ? (
+                                <p className="text-xs text-red-500 flex items-center gap-1"><span className="material-symbols-outlined text-sm">error</span>{schemasError}</p>
+                            ) : (
+                                <select
+                                    className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary"
+                                    value={form.destination_schema_id}
+                                    onChange={e => setForm(p => ({ ...p, destination_schema_id: e.target.value }))}
+                                >
+                                    <option value="">No schema selected</option>
+                                    {schemas.map(s => <option key={s.id} value={s.id}>{s.schema_name}</option>)}
+                                </select>
+                            )}
                         </div>
                     </div>
                     <div className="flex gap-2 justify-end">
@@ -631,9 +652,9 @@ const JobSettingsSection = ({ job, onJobUpdated }) => {
 };
 
 // ── Main SetupTab ───────────────────────────────────────────────────────────
-const SetupTab = ({ job, onJobUpdated, onStartMapping, startMappingLoading }) => (
+const SetupTab = ({ job, onJobUpdated, onJobDirectUpdate, onStartMapping, startMappingLoading }) => (
     <div className="space-y-6">
-        <JobSettingsSection job={job} onJobUpdated={onJobUpdated} />
+        <JobSettingsSection job={job} onJobUpdated={onJobUpdated} onJobDirectUpdate={onJobDirectUpdate} />
         <UploadedFilesSection jobId={job.id} />
         <FieldMappingsSection jobId={job.id} />
 
