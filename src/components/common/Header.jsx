@@ -1,59 +1,112 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+const navItems = [
+    { label: 'Dashboard',          path: '/',                  key: 'dashboard',          icon: 'dashboard'              },
+    { label: 'Users',              path: '/users',             key: 'users',              icon: 'people'                 },
+    { label: 'Schemas',            path: '/schemas',           key: 'schemas',            icon: 'schema'                 },
+    { label: 'Schema Fields',      path: '/schema-fields',     key: 'schema-fields',      icon: 'view_column'            },
+    { label: 'Mapping Templates',  path: '/mapping-templates', key: 'mapping-templates',  icon: 'transform'              },
+    { label: 'Migration Jobs',     path: '/migration-jobs',    key: 'migration-jobs',     icon: 'work'                   },
+    { label: 'Customers',          path: '/customers',         key: 'customers',          icon: 'person'                 },
+    { label: 'Accounts',           path: '/accounts',          key: 'accounts',           icon: 'account_balance_wallet' },
+    { label: 'Notifications',      path: '/notifications',     key: 'notifications',      icon: 'notifications'          },
+    { label: 'Audit Logs',         path: '/audit-logs',        key: 'audit-logs',         icon: 'history'                },
+];
+
+const NavLink = ({ item, activeTab, onClick }) => (
+    <Link
+        to={item.path}
+        onClick={onClick}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === item.key
+                ? 'bg-primary text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0d121b] dark:hover:text-white'
+        }`}
+    >
+        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+        {item.label}
+    </Link>
+);
+
 const Header = ({ activeTab = 'dashboard', onLogout }) => {
-    const navItems = [
-        { label: 'Dashboard', path: '/', key: 'dashboard' },
-        { label: 'Users', path: '/users', key: 'users' },
-        { label: 'Schemas', path: '/schemas', key: 'schemas' },
-        { label: 'Schema-fields', path: '/schema-fields', key: 'schema-fields' },
-        { label: 'Mapping-templates', path: '/mapping-templates', key: 'mapping-templates' },
-        { label: 'Migration Jobs', path: '/migration-jobs', key: 'migration-jobs' },
-        { label: 'Customers', path: '/customers', key: 'customers' },
-        { label: 'Accounts', path: '/accounts', key: 'accounts' },
-        { label: 'Notifications', path: '/notifications', key: 'notifications' },
-        { label: 'Audit Logs', path: '/audit-logs', key: 'audit-logs' },
-    ];
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e7ebf3] dark:border-gray-800 bg-white dark:bg-background-dark px-10 py-3 sticky top-0 z-50">
-            <div className="flex items-center gap-8">
-                <div className="flex items-center gap-4 text-primary">
-                    <div className="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
+        <>
+            {/* ── Desktop sidebar ─────────────────────────────────────── */}
+            <aside className="hidden md:flex fixed inset-y-0 left-0 w-60 flex-col bg-white dark:bg-background-dark border-r border-[#e7ebf3] dark:border-gray-800 z-50">
+                <div className="flex items-center gap-3 px-5 py-5 border-b border-[#e7ebf3] dark:border-gray-800 shrink-0">
+                    <div className="size-8 flex items-center justify-center bg-primary/10 rounded-lg text-primary shrink-0">
                         <span className="material-symbols-outlined">account_balance</span>
                     </div>
-                    <h2 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">
+                    <h2 className="text-[#0d121b] dark:text-white text-base font-bold leading-tight tracking-tight truncate">
                         BankSim Admin
                     </h2>
                 </div>
-                <nav className="hidden md:flex items-center gap-6">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.key}
-                            className={`text-sm font-medium transition-colors ${
-                                activeTab === item.key
-                                    ? 'text-primary font-bold border-b-2 border-primary pb-1'
-                                    : 'text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary'
-                            }`}
-                            to={item.path}
-                        >
-                            {item.label}
-                        </Link>
+
+                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+                    {navItems.map(item => (
+                        <NavLink key={item.key} item={item} activeTab={activeTab} />
                     ))}
                 </nav>
-            </div>
-            <div className="flex items-center gap-4">
-                <button className="p-2 text-gray-500 dark:text-gray-400">
-                    <span className="material-symbols-outlined">notifications</span>
+
+                <div className="shrink-0 border-t border-[#e7ebf3] dark:border-gray-800 p-3">
+                    <button
+                        onClick={onLogout}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0d121b] dark:hover:text-white transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        Logout
+                    </button>
+                </div>
+            </aside>
+
+            {/* ── Mobile top bar ───────────────────────────────────────── */}
+            <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-white dark:bg-background-dark border-b border-[#e7ebf3] dark:border-gray-800">
+                <div className="flex items-center gap-2.5">
+                    <div className="size-7 flex items-center justify-center bg-primary/10 rounded-lg text-primary">
+                        <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                    </div>
+                    <h2 className="text-[#0d121b] dark:text-white text-base font-bold leading-tight">BankSim Admin</h2>
+                </div>
+                <button
+                    onClick={() => setMobileOpen(p => !p)}
+                    className="p-2 text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                    <span className="material-symbols-outlined">{mobileOpen ? 'close' : 'menu'}</span>
                 </button>
-                <div className="h-8 w-[1px] bg-[#e7ebf3] dark:bg-gray-800 mx-2"></div>
-                <button onClick={onLogout} className="flex items-center gap-2 group">
+            </header>
+
+            {/* ── Mobile slide-out menu ────────────────────────────────── */}
+            {mobileOpen && (
+                <div className="md:hidden fixed inset-0 z-40 pt-14">
                     <div
-                        className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border border-[#e7ebf3] dark:border-gray-800"
-                        style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDObRANjtnr_fyqWT5hxwdnmUKYfnxJtmCW_IcApWi9CejlVnapkcKFo74DFplgYvZMOSPEVBFQk-HZ9Im11ex_Ba-eOBaPrECBZg7gWaeHPAzgU_qVQuncC9PaL4R8yeBcegl-v8Pr01qYAwA4dykX8EoMOF8kf-2FmRsAcssV0UXDJgbw2JIZ9dCVFS7IxPHdujgjOxMvxsiB70z04-W_qhxZPgoa0h65AB-XxxKD_RcIZpSHCp-QY6j5Y4m_f62A-1QpGv_rzt4")'}}
-                    ></div>
-                </button>
-            </div>
-        </header>
+                        className="absolute inset-0 bg-black/30"
+                        onClick={() => setMobileOpen(false)}
+                    />
+                    <nav className="relative w-64 h-full bg-white dark:bg-background-dark border-r border-[#e7ebf3] dark:border-gray-800 py-4 px-3 space-y-0.5 overflow-y-auto">
+                        {navItems.map(item => (
+                            <NavLink
+                                key={item.key}
+                                item={item}
+                                activeTab={activeTab}
+                                onClick={() => setMobileOpen(false)}
+                            />
+                        ))}
+                        <div className="pt-4 mt-4 border-t border-[#e7ebf3] dark:border-gray-700">
+                            <button
+                                onClick={() => { setMobileOpen(false); onLogout?.(); }}
+                                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">logout</span>
+                                Logout
+                            </button>
+                        </div>
+                    </nav>
+                </div>
+            )}
+        </>
     );
 };
 

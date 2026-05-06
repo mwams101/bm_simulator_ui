@@ -148,7 +148,7 @@ const UsersPage = () => {
     return (
         <div
             className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden font-display">
-            <div className="layout-container flex h-full grow flex-col">
+            <div className="layout-container flex h-full grow flex-col pt-14 md:pt-0 md:pl-60">
                 <Header activeTab="users" onLogout={handleLogout} />
 
                 <main className="flex-1 flex flex-col items-center">
