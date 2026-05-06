@@ -179,21 +179,30 @@ const FieldMappingsSection = ({ jobId }) => {
 
     const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
+    const fetchTemplates = async () => {
+        try {
+            const r = await fetch(`${API}/mapping-templates/`, { headers: headers() });
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            const data = await r.json();
+            if (Array.isArray(data)) setTemplates(data);
+        } catch {}
+    };
+
     const fetch_ = async () => {
         setLoading(true);
         try {
-            const [mRes, tRes] = await Promise.all([
-                fetch(`${API}/field-mappings`, { headers: headers() }),
-                fetch(`${API}/mapping-templates`, { headers: headers() }),
-            ]);
-            const [mData, tData] = await Promise.all([mRes.json(), tRes.json()]);
-            const jobMappings = mData.filter(m => m.migration_job_id === jobId);
-            setMappings(jobMappings);
-            setTemplates(tData);
-            if (jobMappings.length > 0 && !selected) setSelected(jobMappings[0]);
+            const r = await fetch(`${API}/field-mappings/`, { headers: headers() });
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            const data = await r.json();
+            if (Array.isArray(data)) {
+                const jobMappings = data.filter(m => m.migration_job_id === jobId);
+                setMappings(jobMappings);
+                if (jobMappings.length > 0 && !selected) setSelected(jobMappings[0]);
+            }
         } finally { setLoading(false); }
     };
 
+    useEffect(() => { fetchTemplates(); }, []);
     useEffect(() => { fetch_(); }, [jobId]);
 
     const handleSubmit = async (e) => {
@@ -286,6 +295,10 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
     const [quickMapError, setQuickMapError] = useState('');
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [editSubmitting, setEditSubmitting] = useState(false);
+    const [editError, setEditError] = useState('');
     const [form, setForm] = useState({ source_field: '', destination_field: '', field_order: 1, transformation_rule: 'none' });
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState('');
@@ -324,6 +337,29 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
             await fetch(`${API}/field-mapping-details/${deleteTarget.id}`, { method: 'DELETE', headers: headers() });
             setDeleteTarget(null); fetch_();
         } finally { setDeleteLoading(false); }
+    };
+
+    const startEdit = (d) => {
+        setEditingId(d.id);
+        setEditForm({ source_field: d.source_field, destination_field: d.destination_field, field_order: d.field_order, transformation_rule: d.transformation_rule });
+        setEditError('');
+        setShowForm(false);
+        setShowQuickMap(false);
+    };
+
+    const cancelEdit = () => { setEditingId(null); setEditForm({}); setEditError(''); };
+
+    const handleEditSave = async () => {
+        setEditSubmitting(true); setEditError('');
+        try {
+            const r = await fetch(`${API}/field-mapping-details/${editingId}`, {
+                method: 'PUT', headers: headers(),
+                body: JSON.stringify({ field_mapping_id: mappingId, ...editForm, field_order: Number(editForm.field_order) }),
+            });
+            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed to save'); }
+            cancelEdit(); fetch_();
+        } catch (err) { setEditError(err.message); }
+        finally { setEditSubmitting(false); }
     };
 
     const handleQuickMap = async () => {
@@ -424,14 +460,50 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
                     {['#', 'Source Field', 'Destination Field', 'Transformation', ''].map(h => <th key={h} className="px-3 py-2 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">{h}</th>)}
                 </tr></thead>
                 <tbody className="divide-y divide-[#cfd7e7] dark:divide-gray-800">
-                    {loading ? <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400"><span className="material-symbols-outlined animate-spin">progress_activity</span></td></tr>
-                        : details.length > 0 ? details.map(d => (
+                    {loading
+                        ? <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400"><span className="material-symbols-outlined animate-spin">progress_activity</span></td></tr>
+                        : details.length > 0 ? details.map(d => editingId === d.id ? (
+                            <tr key={d.id} className="bg-primary/5 dark:bg-primary/10">
+                                <td className="px-2 py-2">
+                                    <input type="number" min="1" className="w-14 px-2 py-1 rounded border border-[#e7ebf3] dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs outline-none focus:border-primary" value={editForm.field_order} onChange={e => setEditForm(p => ({ ...p, field_order: e.target.value }))} />
+                                </td>
+                                <td className="px-2 py-2">
+                                    <input className="w-full px-2 py-1 rounded border border-[#e7ebf3] dark:border-gray-600 dark:bg-gray-900 dark:text-white font-mono text-xs outline-none focus:border-primary" value={editForm.source_field} onChange={e => setEditForm(p => ({ ...p, source_field: e.target.value }))} />
+                                </td>
+                                <td className="px-2 py-2">
+                                    <input className="w-full px-2 py-1 rounded border border-[#e7ebf3] dark:border-gray-600 dark:bg-gray-900 dark:text-white font-mono text-xs outline-none focus:border-primary" value={editForm.destination_field} onChange={e => setEditForm(p => ({ ...p, destination_field: e.target.value }))} />
+                                </td>
+                                <td className="px-2 py-2">
+                                    <select className="w-full px-2 py-1 rounded border border-[#e7ebf3] dark:border-gray-600 dark:bg-gray-900 dark:text-white text-xs outline-none focus:border-primary" value={editForm.transformation_rule} onChange={e => setEditForm(p => ({ ...p, transformation_rule: e.target.value }))}>
+                                        {TRANSFORM_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                                    </select>
+                                </td>
+                                <td className="px-2 py-2">
+                                    <div className="flex items-center justify-end gap-1">
+                                        {editError && <span className="text-red-500 text-xs mr-1 truncate max-w-[120px]" title={editError}>{editError}</span>}
+                                        <button onClick={handleEditSave} disabled={editSubmitting} className="flex items-center gap-0.5 px-2 py-1 rounded bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                                            {editSubmitting ? <span className="material-symbols-outlined animate-spin text-xs">progress_activity</span> : <span className="material-symbols-outlined text-xs">check</span>}Save
+                                        </button>
+                                        <button onClick={cancelEdit} className="px-2 py-1 rounded text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
                             <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                                 <td className="px-3 py-2 text-gray-400">{d.field_order}</td>
                                 <td className="px-3 py-2 font-mono text-[#0d121b] dark:text-white">{d.source_field}</td>
                                 <td className="px-3 py-2 font-mono text-primary">{d.destination_field}</td>
                                 <td className="px-3 py-2"><span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">{d.transformation_rule}</span></td>
-                                <td className="px-3 py-2 text-right"><button onClick={() => setDeleteTarget(d)} className="text-gray-400 hover:text-red-500 transition-colors"><span className="material-symbols-outlined text-sm">delete</span></button></td>
+                                <td className="px-3 py-2 text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                        <button onClick={() => startEdit(d)} className="text-gray-400 hover:text-primary transition-colors" title="Edit">
+                                            <span className="material-symbols-outlined text-sm">edit</span>
+                                        </button>
+                                        <button onClick={() => setDeleteTarget(d)} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         )) : <EmptyRow cols={5} message="No field details yet." />}
                 </tbody>
@@ -444,9 +516,124 @@ const FieldMappingDetailsSection = ({ mappingId }) => {
     );
 };
 
+// ── Job Settings ────────────────────────────────────────────────────────────
+const JobSettingsSection = ({ job, onJobUpdated }) => {
+    const navigate = useNavigate();
+    const [editing, setEditing] = useState(false);
+    const [schemas, setSchemas] = useState([]);
+    const [form, setForm] = useState({ name: job.name, destination_schema_id: job.destination_schema_id ?? '' });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    const headers = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+
+    useEffect(() => {
+        const fetchSchemas = async () => {
+            try {
+                const r = await fetch(`${API}/destination-schemas`, { headers: headers() });
+                if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+                if (r.ok) setSchemas(await r.json());
+            } catch (e) { void e; }
+        };
+        fetchSchemas();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const startEdit = () => {
+        setForm({ name: job.name, destination_schema_id: job.destination_schema_id ?? '' });
+        setError('');
+        setEditing(true);
+    };
+
+    const handleSave = async () => {
+        setSaving(true); setError('');
+        try {
+            const r = await fetch(`${API}/migration-jobs/${job.id}`, {
+                method: 'PUT', headers: headers(),
+                body: JSON.stringify({
+                    name: form.name,
+                    destination_schema_id: form.destination_schema_id !== '' ? Number(form.destination_schema_id) : null,
+                }),
+            });
+            if (r.status === 401 || r.status === 403) { localStorage.removeItem('token'); navigate('/login', { replace: true }); return; }
+            if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Failed to save'); }
+            setEditing(false);
+            onJobUpdated?.();
+        } catch (err) { setError(err.message); }
+        finally { setSaving(false); }
+    };
+
+    const currentSchema = schemas.find(s => s.id === job.destination_schema_id);
+
+    return (
+        <div className="bg-white dark:bg-background-dark rounded-xl border border-[#cfd7e7] dark:border-gray-800 p-5">
+            <SectionHeader title="Job Settings" icon="tune" />
+
+            {editing ? (
+                <div className="space-y-4">
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Job Name</label>
+                            <input
+                                className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary"
+                                value={form.name}
+                                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">Destination Schema</label>
+                            <select
+                                className="w-full px-3 py-2 rounded-lg border border-[#e7ebf3] dark:border-gray-700 dark:bg-gray-900 dark:text-white text-sm outline-none focus:border-primary"
+                                value={form.destination_schema_id}
+                                onChange={e => setForm(p => ({ ...p, destination_schema_id: e.target.value }))}
+                            >
+                                <option value="">No schema selected</option>
+                                {schemas.map(s => <option key={s.id} value={s.id}>{s.schema_name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => { setEditing(false); setError(''); }} className="px-4 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                        <button type="button" onClick={handleSave} disabled={saving || !form.name.trim()} className="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-1">
+                            {saving && <span className="material-symbols-outlined animate-spin text-xs">progress_activity</span>}Save Changes
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 flex-1">
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Job Name</p>
+                            <p className="text-sm font-semibold text-[#0d121b] dark:text-white">{job.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Destination Schema</p>
+                            {job.destination_schema_id ? (
+                                <p className="text-sm font-semibold text-[#0d121b] dark:text-white">
+                                    {currentSchema ? currentSchema.schema_name : `Schema #${job.destination_schema_id}`}
+                                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-semibold">#{job.destination_schema_id}</span>
+                                </p>
+                            ) : (
+                                <p className="text-sm text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-sm">warning</span>Not set — required for validation
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    <button onClick={startEdit} className="ml-4 flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#e7ebf3] dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors">
+                        <span className="material-symbols-outlined text-sm">edit</span>Edit
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ── Main SetupTab ───────────────────────────────────────────────────────────
-const SetupTab = ({ job, onStartMapping, startMappingLoading }) => (
+const SetupTab = ({ job, onJobUpdated, onStartMapping, startMappingLoading }) => (
     <div className="space-y-6">
+        <JobSettingsSection job={job} onJobUpdated={onJobUpdated} />
         <UploadedFilesSection jobId={job.id} />
         <FieldMappingsSection jobId={job.id} />
 

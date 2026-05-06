@@ -224,7 +224,7 @@ const MigrationJobDetailPage = () => {
 
                                 {/* Tab content */}
                                 <div>
-                                    {activeTab === 'setup' && <SetupTab job={job} onStartMapping={handleStartMapping} startMappingLoading={startMappingLoading} />}
+                                    {activeTab === 'setup' && <SetupTab job={job} onJobUpdated={fetchJob} onStartMapping={handleStartMapping} startMappingLoading={startMappingLoading} />}
                                     {activeTab === 'records' && <RecordsTab job={job} onStartExecution={handleStartExecution} startExecutionLoading={startExecutionLoading} executionResult={executionResult} />}
                                     {activeTab === 'validation' && <ValidationTab job={job} onStartValidation={handleStartValidation} startValidationLoading={startValidationLoading} />}
                                     {activeTab === 'reports' && <ReportsTab job={job} />}
